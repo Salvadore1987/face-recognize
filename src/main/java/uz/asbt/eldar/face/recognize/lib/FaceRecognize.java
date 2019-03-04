@@ -347,6 +347,116 @@ public class FaceRecognize implements AutoCloseable {
             throw new RecognizeException("Can't free an image");
     }
 
+    /**
+     * Метод сохраняет изображение в файл.
+     * @param hImage - дескриптор изображения.
+     * @param fileName - имя файла для сохранения.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public void saveImageToFile(FSDK.HImage hImage, String fileName) throws RecognizeException {
+        int result = FSDK.SaveImageToFile(hImage, fileName);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't save image to file");
+    }
+
+    /**
+     * Метод сохраняет изображение в файл только для платформы Windows.
+     * @param hImage - дескриптор изображения.
+     * @param fileName - имя файла для сохранения.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public void saveImageToFileW(FSDK.HImage hImage, String fileName) throws RecognizeException {
+        int result = FSDK.SaveImageToFileW(hImage, fileName);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't save image to file");
+    }
+
+    /**
+     * Возвращает размер буфера изображения.
+     * @param hImage - дескриптор изображения.
+     * @param imageMode - режим изображения.
+     * @return размер буфера.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public int getImageBufferSize(FSDK.HImage hImage, int imageMode) throws RecognizeException {
+        int[] bufSize = new int[1];
+        int result = FSDK.GetImageBufferSize(hImage, bufSize, imageMode);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't get image buffer size");
+        return bufSize[0];
+    }
+
+    /**
+     * Метод сохраняет изображение в буфер.
+     * @param hImage - дескриптор изображения.
+     * @param imageMode - режим изображения.
+     * @return буфер.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public byte[] saveImageToBuffer(FSDK.HImage hImage, int imageMode) throws RecognizeException {
+        int bufSize = getImageBufferSize(hImage, imageMode);
+        byte[] buffer = new byte[bufSize];
+        int result = FSDK.SaveImageToBuffer(hImage, buffer, imageMode);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't save image to buffer");
+        return buffer;
+    }
+
+    /**
+     * Устанавливает качество сжатия JPEG для использования в функции FSDK_SaveImageToFile.
+     * @param quality - качество сжатия JPEG. Варьируется от 0 до 100.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public void setJpegCompressionQuality(int quality) throws RecognizeException {
+        int result = FSDK.SetJpegCompressionQuality(quality);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't setting jpeg quality");
+    }
+
+    /**
+     * Копирует изображения из одного дескриптора в другой.
+     * @param sourceImage - дескриптор изображения из которого нужно копировать.
+     * @param destImage - дескриптор изображения в который нужно копировать.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public void copyImage(FSDK.HImage sourceImage, FSDK.HImage destImage) throws RecognizeException {
+        int result = FSDK.CopyImage(sourceImage, destImage);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't copy image");
+    }
+
+    /**
+     * Изменяет размер изображения. Дескриптор целевого изображения должен быть создан с
+     * функция FSDK_CreateEmptyImage.
+     * @param sourceImage - дескриптор изменяемого изображения.
+     * @param ratio - коэффициент, по которому изменяются размеры x и y исходного изображения. Фактор
+     * значение больше 1 соответствует увеличению размера изображения.
+     * @param destImage - дескриптор целевого изображения.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public void resizeImage(FSDK.HImage sourceImage,
+                            double ratio,
+                            FSDK.HImage destImage) throws RecognizeException {
+        int result = FSDK.ResizeImage(sourceImage, ratio, destImage);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't resize image");
+    }
+
+    /**
+     *
+     * @param sourceImage
+     * @param multiplier
+     * @param destImage
+     * @throws RecognizeException
+     */
+    public void rotateImage90(FSDK.HImage sourceImage,
+                              int multiplier,
+                              FSDK.HImage destImage) throws RecognizeException {
+        int result = FSDK.RotateImage90(sourceImage, multiplier, destImage);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't rotate image");
+    }
+
     @Override
     public void close() throws Exception {
         instance = null;
