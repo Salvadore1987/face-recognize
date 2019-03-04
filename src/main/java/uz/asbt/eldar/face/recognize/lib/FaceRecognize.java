@@ -414,15 +414,18 @@ public class FaceRecognize implements AutoCloseable {
     }
 
     /**
-     * Копирует изображения из одного дескриптора в другой.
+     * Создает копию изображения. Дескриптор целевого изображения должен быть
+     * создан с помощью функции FSDK_CreateEmptyImage.
      * @param sourceImage - дескриптор изображения из которого нужно копировать.
-     * @param destImage - дескриптор изображения в который нужно копировать.
+     * @return измененное изображение.
      * @throws RecognizeException в случае ошибки.
      */
-    public void copyImage(FSDK.HImage sourceImage, FSDK.HImage destImage) throws RecognizeException {
+    public FSDK.HImage copyImage(FSDK.HImage sourceImage) throws RecognizeException {
+        FSDK.HImage destImage = createEmptyImage();
         int result = FSDK.CopyImage(sourceImage, destImage);
         if (result != FSDK.FSDKE_OK)
             throw new RecognizeException("Can't copy image");
+        return destImage;
     }
 
     /**
@@ -431,30 +434,161 @@ public class FaceRecognize implements AutoCloseable {
      * @param sourceImage - дескриптор изменяемого изображения.
      * @param ratio - коэффициент, по которому изменяются размеры x и y исходного изображения. Фактор
      * значение больше 1 соответствует увеличению размера изображения.
-     * @param destImage - дескриптор целевого изображения.
+     * @return измененное изображение.
      * @throws RecognizeException в случае ошибки.
      */
-    public void resizeImage(FSDK.HImage sourceImage,
-                            double ratio,
-                            FSDK.HImage destImage) throws RecognizeException {
+    public FSDK.HImage resizeImage(FSDK.HImage sourceImage, double ratio) throws RecognizeException {
+        FSDK.HImage destImage = createEmptyImage();
         int result = FSDK.ResizeImage(sourceImage, ratio, destImage);
         if (result != FSDK.FSDKE_OK)
             throw new RecognizeException("Can't resize image");
+        return destImage;
     }
 
     /**
-     *
-     * @param sourceImage
-     * @param multiplier
-     * @param destImage
-     * @throws RecognizeException
+     * Поворот изображения на 90 или 180 градусов по часовой стрелке или против часовой стрелки.
+     * Дескриптор целевого изображения должен быть создан с помощью функции FSDK_CreateEmptyImage.
+     * @param sourceImage - дескриптор изменяемого изображения.
+     * @param multiplier - целочисленный множитель 90 градусов, определяющий угол поворота.
+     *                   Укажите 1 для 90 градусов по часовой стрелке, 2 для 180 градусов по часовой стрелке;
+     *                   укажите -1 для 90 градусов против часовой стрелки.
+     * @return измененное изображение.
+     * @throws RecognizeException в случае ошибки.
      */
-    public void rotateImage90(FSDK.HImage sourceImage,
-                              int multiplier,
-                              FSDK.HImage destImage) throws RecognizeException {
+    public FSDK.HImage rotateImage90(FSDK.HImage sourceImage, int multiplier) throws RecognizeException {
+        FSDK.HImage destImage = createEmptyImage();
         int result = FSDK.RotateImage90(sourceImage, multiplier, destImage);
         if (result != FSDK.FSDKE_OK)
             throw new RecognizeException("Can't rotate image");
+        return destImage;
+    }
+
+    /**
+     * Поворот изображения вокруг его центра. Дескриптор целевого изображения должен быть создан с
+     * помощью функции FSDK_CreateEmptyImage.
+     * @param sourceImage - дескриптор изменяемого изображения.
+     * @param angle - угол поворота в градусах.
+     * @return измененное изображение.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public FSDK.HImage rotateImage(FSDK.HImage sourceImage, double angle) throws RecognizeException {
+        FSDK.HImage destImage = createEmptyImage();
+        int result = FSDK.RotateImage(sourceImage, angle, destImage);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't rotate image");
+        return destImage;
+    }
+
+    /**
+     * Поворот изображения вокруг произвольного центра.
+     * Дескриптор целевого изображения должен быть создан с помощью функции FSDK_CreateEmptyImage.
+     * @param sourceImage - дескриптор изменяемого изображения.
+     * @param angle  - угол поворота в градусах.
+     * @param xCenter - координата X центра вращения.
+     * @param yCenter - координата Y центра вращения.
+     * @return измененное изображение.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public FSDK.HImage rotateImageCenter(FSDK.HImage sourceImage,
+                                         double angle,
+                                         double xCenter,
+                                         double yCenter) throws RecognizeException {
+        FSDK.HImage destImage = createEmptyImage();
+        int result = FSDK.RotateImageCenter(sourceImage, angle, xCenter, yCenter, destImage);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't rotate image");
+        return destImage;
+    }
+
+    /**
+     * Создает копию прямоугольной области изображения.
+     * Дескриптор целевого изображения должен быть создан с помощью функции FSDK_CreateEmptyImage.
+     * Если некоторая вершина прямоугольника находится вне исходного изображения, прямоугольные области,
+     * которые не содержат исходное изображение, будут черными.
+     * @param sourceImage - дескриптор изменяемого изображения.
+     * @param x1 - координата X левого нижнего угла скопированного прямоугольника.
+     * @param x2 - координата X правого верхнего угла скопированного прямоугольника.
+     * @param y1 - координата Y левого нижнего угла скопированного прямоугольника.
+     * @param y2 - координата Y правого верхнего угла скопированного прямоугольника.
+     * @return измененное изображение.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public FSDK.HImage copyRect(FSDK.HImage sourceImage,
+                                int x1,
+                                int x2,
+                                int y1,
+                                int y2) throws RecognizeException {
+        FSDK.HImage destImage = createEmptyImage();
+        int result = FSDK.CopyRect(sourceImage, x1, y1, x2, y2, destImage);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't copy rectangle");
+        return destImage;
+    }
+
+    /**
+     * Создает копию прямоугольной области изображения и добавляет реплицированные границы пикселей.
+     * Дескриптор целевого изображения должен быть создан с помощью функции FSDK_CreateEmptyImage.
+     * Эта функция копирует исходное изображение в целевое изображение и заполняет пиксели («рамку»)
+     * за пределами скопированной области в целевом изображении значениями ближайших пикселей исходного изображения.
+     * @param sourceImage - дескриптор изменяемого изображения.
+     * @param x1 - координата X левого нижнего угла скопированного прямоугольника.
+     * @param y1 - координата Y левого нижнего угла скопированного прямоугольника.
+     * @param x2 - координата X правого верхнего угла скопированного прямоугольника.
+     * @param y2 - координата Y правого верхнего угла скопированного прямоугольника.
+     * @return измененное изображение.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public FSDK.HImage copyRectReplicateBorder(FSDK.HImage sourceImage,
+                                               int x1,
+                                               int y1,
+                                               int x2,
+                                               int y2) throws RecognizeException {
+        FSDK.HImage destImage = createEmptyImage();
+        int result = FSDK.CopyRectReplicateBorder(sourceImage, x1, y1, x2, y2, destImage);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't copy rectangle");
+        return destImage;
+    }
+
+    /**
+     * Зеркально отображает изображение. Функция может отражать изображения по горизонтали или по вертикали.
+     * @param hImage - дескриптор изображения.
+     * @param useVerticalMirroringInsteadOfHorizontal - устанавливает направление зеркалирования.
+     *                                                true - слева-направо, false - сверху вниз.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public void mirrorImage(FSDK.HImage hImage, boolean useVerticalMirroringInsteadOfHorizontal) throws RecognizeException {
+        int result = FSDK.MirrorImage(hImage, useVerticalMirroringInsteadOfHorizontal);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't mirror image");
+    }
+
+    /**
+     * Возвращает ширину изображения.
+     * @param hImage - дескриптор изображения.
+     * @return ширина изображения.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public int getImageWidth(FSDK.HImage hImage) throws RecognizeException {
+        int[] width = new int[1];
+        int result = FSDK.GetImageWidth(hImage, width);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't get image width");
+        return width[0];
+    }
+
+    /**
+     * Возвращает высоту изображения.
+     * @param hImage - дескриптор изображения.
+     * @return высота изображения.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public int getImageHeight(FSDK.HImage hImage) throws RecognizeException {
+        int[] height = new int[1];
+        int result = FSDK.GetImageHeight(hImage, height);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't get image height");
+        return height[0];
     }
 
     @Override
