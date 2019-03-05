@@ -728,6 +728,24 @@ public class FaceRecognize implements AutoCloseable {
         return threshold[0];
     }
 
+    /**
+     * Эта функция возвращает пороговое значение для сходства, чтобы определить, соответствуют ли два сопоставленных шаблона
+     * одному лицу с заданным значением FRR (False Rejection Rate). FRR определяет
+     * допустимую частоту ошибок, когда два шаблона одного и того же лица определены как принадлежащие к
+     * различным людям. Уменьшение FRR приводит к увеличению FAR - то есть с низким FRR становится
+     * более вероятно, что шаблоны двух разных людей будут признаны одним и тем же человеком.
+     * @param value - желаемое значение FRR. Варьируется от 0,0 (означает 0%) до 1,0 (означает 100%).
+     * @return указатель на переменную типа float для хранения рассчитанного порогового значения
+     * @throws RecognizeException в случае ошибки.
+     */
+    public float getMatchingThresholdAtFRR(float value) throws RecognizeException {
+        float[] threshold = new float[1];
+        int result = FSDK.GetMatchingThresholdAtFRR(value, threshold);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't get matching");
+        return threshold[0];
+    }
+
     @Override
     public void close() throws Exception {
         instance = null;
