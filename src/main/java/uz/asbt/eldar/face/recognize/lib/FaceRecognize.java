@@ -3,6 +3,8 @@ package uz.asbt.eldar.face.recognize.lib;
 import Luxand.FSDK;
 import uz.asbt.eldar.face.recognize.exceptions.RecognizeException;
 import uz.asbt.eldar.face.recognize.model.FacePosition;
+import uz.asbt.eldar.face.recognize.model.FaceTemplate;
+import uz.asbt.eldar.face.recognize.model.FacialFeatures;
 import uz.asbt.eldar.face.recognize.model.Point;
 
 import java.util.ArrayList;
@@ -589,6 +591,141 @@ public class FaceRecognize implements AutoCloseable {
         if (result != FSDK.FSDKE_OK)
             throw new RecognizeException("Can't get image height");
         return height[0];
+    }
+
+    /**
+     * Эта функция используется для извлечения шаблона из изображения лица. Функция сначала обнаруживает
+     * лицо, затем обнаруживает его черты лица и извлекает шаблон.
+     * Если на изображении более одного лица, шаблон извлекается для лица с наибольшим
+     * четко видимыми деталями. Если нет четко видимого лица, функция возвращает код ошибки. Чтобы
+     * установить порог, определяющий приемлемое качество для лица, используйте функцию FSDK_SetFaceDetectionThreshold.
+     * Если положение лица или его особенности или глазные центры известны, более эффективно использовать
+     * Функцию FSDK_GetFaceTemplateInRegion или FSDK_GetFaceTemplateUsingEyes. Чтобы
+     * извлеч шаблон для определенного лица, используйте функцию FSDK_GetFaceTemplateInRegion.
+     * @param hImage - дескриптор изображения.
+     * @return объект класса @see FaceTemplate, который содержит шаблон лица.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public FaceTemplate getFaceTemplate(FSDK.HImage hImage) throws RecognizeException {
+        FSDK.FSDK_FaceTemplate.ByReference byReference = new FSDK.FSDK_FaceTemplate.ByReference();
+        int result = FSDK.GetFaceTemplate(hImage, byReference);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't found face");
+        return new FaceTemplate(byReference.template);
+    }
+
+    /**
+     * Сравнивает 2 шаблона лица. Возвращаемое значение определяет сходство.
+     * @param template1 - первый шаблон для сверки.
+     * @param template2 - второй шаблон для сверки.
+     * @return значение указывающее на сходство лица.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public float matchFaces(FaceTemplate template1, FaceTemplate template2) throws RecognizeException {
+        float[] similarity = new float[1];
+        FSDK.FSDK_FaceTemplate.ByReference faceTemplate1 = new FSDK.FSDK_FaceTemplate.ByReference();
+        FSDK.FSDK_FaceTemplate.ByReference faceTemplate2 = new FSDK.FSDK_FaceTemplate.ByReference();
+        faceTemplate1.template = template1.getTemplate();
+        faceTemplate2.template = template2.getTemplate();
+        int result = FSDK.MatchFaces(faceTemplate1, faceTemplate2, similarity);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't match faces");
+        return similarity[0];
+    }
+
+    /**
+     * Извлекает шаблон для лица, расположенного в определенной области, возвращенный методами detectFace или
+     * detectMultipleFaces.
+     * Функция обнаруживает черты лица в определенной области и извлекает шаблон.
+     * Эта функция может быть полезна, если приблизительный размер лица и
+     * позиция известна.Функция не возвращает ошибок, если лицо не ясно видно.
+     * Это потому, что предполагается, что если функции обнаружения лица возвращают обнаруженное положение лица,
+     * лицо достаточно качественное.
+     * Если черты лица или глазные центры известны, более эффективно использовать
+     * Функцию getFaceTemplateUsingFeatures или getFaceTemplateUsingEyes.
+     * @param hImage - дескриптор изображения.
+     * @param facePosition - экземпляр объекта @see FacePosition с координатами найденного лица.
+     * @return объект класса @see FaceTemplate, который содержит шаблон лица.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public FaceTemplate getFaceTemplateInRegion(FSDK.HImage hImage,
+                                                FacePosition facePosition) throws RecognizeException {
+        FSDK.TFacePosition tFacePosition = facePosition.convertToTFacePosition();
+        FSDK.FSDK_FaceTemplate.ByReference faceTemplate = new FSDK.FSDK_FaceTemplate.ByReference();
+        int result = FSDK.GetFaceTemplateInRegion(hImage, tFacePosition, faceTemplate);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't found face");
+        return new FaceTemplate(faceTemplate.template);
+    }
+
+    /**
+     * Извлекает шаблон лица с использованием обнаруженных координат элемента лица.
+     * Функция получает координаты черты лица, обнаруженные с помощью методов detectFacialFeatures
+     * или detectFacialFeaturesInRegion. Обнаружение лицо, и обнаружение черт лица и глазных центров не выполняются.
+     * Эта функция может быть полезна, когда черты лица для определенного лица уже обнаружены. Функция
+     * не вызывает ошибок, если лицо не ясно видно, так как предполагается, что если лицо и его
+     * черты лица уже обнаружены, лицо достаточно качественное.
+     * Функция определяет, равны ли черты лица, начиная со второго, нулю или
+     * неинициализированный. В этом случае функции вместо этого вызывают getFaceTemplateUsingEyes.
+     * @param hImage - дескриптор изображения.
+     * @param facialFeatures - объект с координатами обнаруженных заранее.
+     * @return объект класса @see FaceTemplate, который содержит шаблон лица.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public FaceTemplate getFaceTemplateUsingFeatures(FSDK.HImage hImage,
+                                                     FacialFeatures facialFeatures) throws RecognizeException {
+        FSDK.FSDK_FaceTemplate.ByReference faceTemplate = new FSDK.FSDK_FaceTemplate.ByReference();
+        FSDK.FSDK_Features features = facialFeatures.convertToFSDKFeatures();
+        int result = FSDK.GetFaceTemplateUsingFeatures(hImage, features, faceTemplate);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't detect face");
+        return new FaceTemplate(faceTemplate.template);
+    }
+
+    /**
+     * Извлекает шаблон лица, используя обнаруженные центры глаз.
+     * Функция получает координаты глазных центров, обнаруженных с помошью методов detectFacialFeatures,
+     * detectFacialFeaturesInRegion, detectEyes или detectEyesInRegion и извлекает шаблон лица.
+     * Обнаружение лица, обнаружение черт лица и глазных центров не производится.
+     * Эта функция может быть полезна, когда черты лица или глазные центры
+     * для конкретного лица уже обнаружены. Функция не возвращает ошибки, если лицо неясно
+     * видимо, поскольку она предполагает, что если лицо и его черты лица или глазные центры уже
+     * обнаружены, то лицо достаточно качественное.
+     * Обратите внимание, что getFaceTemplate, getFaceTemplateInRegion и
+     * функциия getFaceTemplateUsingFeatures возвращают шаблоны, которые могут быть сопоставлены с
+     * более высокой точностью, поэтому рекомендуется использовать эти функции.
+     * @param hImage - дескриптор изображения.
+     * @param eyesCoordinate - объект с координатами центров глаз.
+     * @return объект класса @see FaceTemplate, который содержит шаблон лица.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public FaceTemplate getFaceTemplateUsingEyes(FSDK.HImage hImage,
+                                                 FacialFeatures eyesCoordinate) throws RecognizeException {
+        FSDK.FSDK_FaceTemplate.ByReference faceTemplate = new FSDK.FSDK_FaceTemplate.ByReference();
+        FSDK.FSDK_Features features = eyesCoordinate.convertToFSDKFeatures();
+        int result = FSDK.GetFaceTemplateUsingEyes(hImage, features, faceTemplate);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't detect face");
+        return new FaceTemplate(faceTemplate.template);
+    }
+
+    /**
+     * Эта функция возвращает пороговое значение для сходства, чтобы определить, соответствуют ли два
+     * сопоставленных шаблона и принадлежат ли одному и тому же лицу по заданному значению
+     * FAR (коэффициент ложного принятия). FAR определяет допустимую частоту ошибок,
+     * когда шаблоны двух разных людей ошибочно признаны тем же лицом.
+     * Уменьшение FAR приводит к увеличению FRR - т.е. с низким FAR становится более вероятным, что будут
+     * определены два шаблона от одного и того же человека как принадлежность к разным людям.
+     * @param value желаемое значение FAR. Варьируется от 0,0 (означает 0%) до 1,0 (означает 100%).
+     * @return указатель на переменную типа float для хранения рассчитанного порогового значения
+     * @throws RecognizeException в случае ошибки.
+     */
+    public float getMatchingThresholdAtFAR(float value) throws RecognizeException {
+        float[] threshold = new float[1];
+        int result = FSDK.GetMatchingThresholdAtFAR(value, threshold);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't get matching");
+        return threshold[0];
     }
 
     @Override

@@ -19,10 +19,10 @@ public class Point {
         this.y = tPoint.y;
     }
 
-    protected FSDK.TPoint convertToTPoint(Point point) {
+    protected FSDK.TPoint convertToTPoint() {
         FSDK.TPoint tPoint = new FSDK.TPoint();
-        tPoint.x = point.x;
-        tPoint.y = point.y;
+        tPoint.x = this.x;
+        tPoint.y = this.y;
         return tPoint;
     }
 
