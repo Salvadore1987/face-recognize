@@ -6,6 +6,7 @@ import uz.asbt.eldar.face.recognize.exceptions.RecognizeException;
 import uz.asbt.eldar.face.recognize.model.*;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -959,6 +960,22 @@ public class FaceRecognize implements AutoCloseable {
         if (result != FSDK.FSDKE_OK)
             throw new RecognizeException("Can't get similar ID list");
         return similarIDList;
+    }
+
+    /**
+     * Возвращает список имен, которые имее идентификатор.
+     * @param hTracker - дескриптор трекера.
+     * @param id идентификатор.
+     * @return список имен.
+     * @throws RecognizeException в случае ошибки.
+     */
+    public synchronized List<String> getAllNames(FSDK.HTracker hTracker, long id) throws RecognizeException {
+        long maxSizeInBytes = 128L;
+        String[] names = new String[1];
+        int result = FSDK.GetAllNames(hTracker, id, names, maxSizeInBytes);
+        if (result != FSDK.FSDKE_OK)
+            throw new RecognizeException("Can't getting list of names");
+        return Arrays.asList(names[0].split(";"));
     }
 
     @Override
