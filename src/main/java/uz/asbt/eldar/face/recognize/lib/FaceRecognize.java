@@ -1,9 +1,12 @@
 package uz.asbt.eldar.face.recognize.lib;
 
 import Luxand.FSDK;
-import com.sun.jna.ptr.IntByReference;
 import uz.asbt.eldar.face.recognize.exceptions.RecognizeException;
-import uz.asbt.eldar.face.recognize.model.*;
+import uz.asbt.eldar.face.recognize.model.FacePosition;
+import uz.asbt.eldar.face.recognize.model.FaceTemplate;
+import uz.asbt.eldar.face.recognize.model.FacialFeatures;
+import uz.asbt.eldar.face.recognize.model.Point;
+import uz.asbt.eldar.face.recognize.model.TrackerParameter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
